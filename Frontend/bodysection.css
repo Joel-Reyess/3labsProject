@@ -74,8 +74,7 @@ body {
 }
 
 .search-container  {
-    padding: 10px 220px;
-    margin-top: 8px;
+    padding: 0px 10px;
     margin-right: 16px;
     font-size: 17px;
     cursor: pointer;
@@ -95,3 +94,32 @@ body {
   .form-sample{
     background-color: #fff;
   }
+  
+  .sidebar {
+    width: 200px;
+    background-color: #F1F1F1;
+    padding: 10px;
+    position: absolute;
+    height: auto;
+    min-height: 100vh;
+    transition: width 0.3s ease;
+}
+
+.sidebar.hide {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.main-panel {
+    margin-left: 200px;
+    transition: margin-left 0.3s ease;
+}
+
+.main-panel.full-width {
+    margin-left: 0;
+}
+
+.table-responsive {
+    transition: width 0.3s ease;
+}
