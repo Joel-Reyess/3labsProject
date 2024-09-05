@@ -59,9 +59,9 @@
                 <div class="col-md-12 col-lg-12  grid-margin stretch-card">
                   <div class="card">
                     <div class="card-body">
-                      <h4 class="card-title">Prestamos</h4>
+                      <h4 class="card-title">Herramientas</h4>
                       <p class="card-description">
-                        Registro de prestamos
+                        Registro de herramientas
                       </p>
                       
                       <form class="forms-sample" method="POST" enctype="multipart/form-data">
@@ -114,13 +114,10 @@
                         Cantidad
                       </th>
                       <th>
-                        Alumno
+                        Estante
                       </th>
                       <th>
-                        Zona
-                      </th>
-                      <th>
-                        Estado
+                        Categoria
                       </th>
                       <th>
                         Fecha
@@ -128,15 +125,14 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <?php foreach ($ListProduct as $prestamos){?>
+                    <?php foreach ($ListProduct as $herramientas){?>
                       <tr class="table-row">
-                        <td><?php echo $prestamos['idprestamo'];?></td>
-                        <td><?php echo $prestamos ['nombreherramienta']; ?></td>
-                        <td><?php echo $prestamos ['cantidad']; ?></td>
-                        <td><?php echo $prestamos ['alumno']; ?></td>
-                        <td><?php echo $prestamos ['zona']; ?></td>
-                        <td><?php echo $prestamos ['estado']; ?></td>
-                        <td><?php echo $prestamos ['fecha']; ?></td>
+                        <td><?php echo $herramientas['idherramienta'];?></td>
+                        <td><?php echo $herramientas ['nombreherramienta']; ?></td>
+                        <td><?php echo $herramientas ['cantidad']; ?></td>
+                        <td><?php echo $herramientas ['estante']; ?></td>
+                        <td><?php echo $herramientas ['categoria']; ?></td>
+                        <td><?php echo $herramientas ['fecha']; ?></td>
                         <td>
                             <form method="post">
                                 <input type="hidden" name="txtidpro" value="<?php echo $productos['idproducto'] ?>">
