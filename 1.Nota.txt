@@ -1,0 +1,13 @@
+
+En Estudiantes:
+BD: Dividir Campo apellidos por apellido paterno y materno,
+ crear tabla carrera, 
+ crear llave foranea con tabla estiduante
+
+En Usuario
+ App: crear Editar para usuario
+
+En Prestamo
+App: crear CRUD para Prestamo, 
+"Tomar en cuenta que al agregar debe descontar 1 o mas del stock del material
+en caso de Herramienta"
