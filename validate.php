@@ -1,38 +1,47 @@
 <?php
-$usuario=$_POST['usuario'];
-$contraseña=$_POST['contraseña'];
 session_start();
-$_SESSION['usuario']=$usuario;
 
-$conexion=mysqli_connect("localhost","root","","proyect");
+$usuario = $_POST['usuario'];
+$contraseña = $_POST['contraseña'];
 
-$consulta="SELECT*FROM usuarios where Matricula='$usuario' and Contraseña='$contraseña'";
-$resultado=mysqli_query($conexion,$consulta);
+// Conectar a la base de datos
+$conexion = mysqli_connect("localhost", "root", "", "proyect");
 
-$filas=mysqli_fetch_array($resultado);
-
-if($filas['RolID']==1){ //A1
-    header("location:IndexA1.php");
-
-}else
-if($filas['RolID']==2){ //A2
-header("location:IndexA2.php");
+// Comprobar conexión
+if (!$conexion) {
+    die("Conexión fallida: " . mysqli_connect_error());
 }
-else
-if($filas['RolID']==3){ //Nave
-header("location:IndexNave.php");
+
+// Consulta SQL segura utilizando consultas preparadas
+$stmt = $conexion->prepare("SELECT * FROM usuarios WHERE Matricula = ? AND Contraseña = ?");
+$stmt->bind_param("ss", $usuario, $contraseña);
+$stmt->execute();
+$resultado = $stmt->get_result();
+
+// Verificar si hay resultados
+if ($filas = $resultado->fetch_assoc()) {
+    // Si se encuentra un usuario, redirigir según el RolID
+    switch ($filas['RolID']) {
+        case 1:
+            header("Location: IndexA1.php");
+            break;
+        case 2:
+            header("Location: IndexA2.php");
+            break;
+        case 3:
+            header("Location: IndexNave.php");
+            break;
+        case 4:
+            header("Location: IndexA.php");
+            break;
+    }
+} else {
+    // Si no se encuentra el usuario, redirigir a index.php con un parámetro de error
+    header("Location: index.php?error=1"); // Usar un código de error
 }
-else
-if($filas['RolID']==4){ //Admin
-header("location:IndexAdmin.php");
-}
-else{
-    ?>
-    <?php
-    include("index.html");
-    ?>
-    <h1 class="bad">ERROR EN LA AUTENTIFICACION</h1>
-    <?php
-}
-mysqli_free_result($resultado);
+
+// Cerrar la conexión
+$stmt->close();
 mysqli_close($conexion);
+exit(); // Asegúrate de incluir esto al final
+?>

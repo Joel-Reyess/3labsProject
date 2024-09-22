@@ -2,8 +2,8 @@
 
 session_start();
 error_reporting(0);
-$varsesion= $_SESSION['usuario'];
-if($varsesion== null || $varsesion=''){
+$varsesion = $_SESSION['usuario'];
+if ($varsesion == null || $varsesion = '') {
     header("location: index.html");
     die();
 }
@@ -25,7 +25,7 @@ $result_roles = $conn->query($sql_roles);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consumibles</title>
     <script>
-       window.onload = function() {
+        window.onload = function() {
             // Obtén los parámetros de la URL
             const urlParams = new URLSearchParams(window.location.search);
             const status = urlParams.get('status');
@@ -75,8 +75,9 @@ $result_roles = $conn->query($sql_roles);
     <nav class="navbar">
         <button id="toggleSidebar" class="btn btn-primary">☰</button>
         <div class="search-container">
-            <form action="/">
-                <input type="text" placeholder="Buscar" name="search">
+            <form action="Materiales.php" method="GET">
+                <input type="text" placeholder="Buscar" name="search" onkeydown="if (event.key === 'Enter') { this.form.submit(); }">
+
                 <a class="btn btn-outline-danger" href="cerrar_session.php">Cerrar Sesion</a>
             </form>
         </div>
@@ -171,14 +172,29 @@ $result_roles = $conn->query($sql_roles);
                     <tbody>
                         <?php
                         include('connection.php');
-                        $sql = "SELECT materiales.*, edificios.NombreEdificio FROM materiales 
+
+                        // Capturar el término de búsqueda
+                        $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+                        // Modificar la consulta SQL para filtrar los resultados
+                        $sql = "SELECT materiales.*, edificios.NombreEdificio 
+                        FROM materiales 
                         JOIN edificios ON materiales.EdificioID = edificios.EdificioID";
+
+                        // Si hay un término de búsqueda, agregar el filtro a la consulta
+                        if (!empty($search)) {
+                            $sql .= " WHERE materiales.Nombre LIKE '%$search%' 
+                            OR materiales.Descripcion LIKE '%$search%'
+                            OR materiales.Stock LIKE '%$search%'
+                            OR edificios.NombreEdificio LIKE '%$search%'";
+                        }
+
                         $result = mysqli_query($conn, $sql);
 
+                        // Si hay resultados, los mostramos en la tabla
                         while ($mostrar = mysqli_fetch_array($result)) {
                         ?>
                             <tr>
-
                                 <td><?php echo $mostrar['Nombre'] ?></td>
                                 <td><?php echo $mostrar['Descripcion'] ?></td>
                                 <td><?php echo $mostrar['Stock'] ?></td>
@@ -196,6 +212,7 @@ $result_roles = $conn->query($sql_roles);
                         <?php
                         }
                         ?>
+
                     </tbody>
                 </table>
             </div>

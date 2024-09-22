@@ -1,8 +1,8 @@
 <?php
 session_start();
 error_reporting(0);
-$varsesion= $_SESSION['usuario'];
-if($varsesion== null || $varsesion=''){
+$varsesion = $_SESSION['usuario'];
+if ($varsesion == null || $varsesion = '') {
     header("location: index.html");
     die();
 }
@@ -132,8 +132,9 @@ if (isset($_GET['status']) && $_GET['status'] == 'error') {
     <nav class="navbar">
         <button id="toggleSidebar" class="btn btn-primary">☰</button>
         <div class="search-container">
-            <form action="/">
-                <input type="text" placeholder="Buscar" name="search">
+            <form action="PrestamoHNave.php" method="GET">
+                <input type="text" placeholder="Buscar" name="search" onkeydown="if (event.key === 'Enter') { this.form.submit(); }">
+
                 <a class="btn btn-outline-danger" href="cerrar_session.php">Cerrar Sesion</a>
             </form>
         </div>
@@ -158,23 +159,22 @@ if (isset($_GET['status']) && $_GET['status'] == 'error') {
             </ul>
         </div>
     </nav>
-
     <div class="main-panel">
         <div class="content-wrapper">
             <div class="row">
-                <div class="col-md-12 col-lg-12  grid-margin stretch-card">
+                <div class="col-md-12 col-lg-12 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Prestamo</h4>
+                            <h4 class="card-title">Crear Prestamo</h4>
                             <p class="card-description">
-                                Registro de prestamo
+                                Selecione a informacion
                             </p>
                             <form class="forms-sample" action="AgregarPrestamoHNave.php" method="POST" enctype="multipart/form-data">
                                 <div class="form-group">
                                     <div class="form-group">
-                                        <label for="txtItemID" class="form-label">Material</label>
+                                        <label for="txtItemID" class="form-label">Herramientas</label>
                                         <select class="form-control bg-light" id="txtItemID" name="txtItemID" onchange="updateStock()">
-                                            <option value="">Selecciona un material</option>
+                                            <option value="">Selecciona un Herramienta</option>
                                             <?php
                                             if ($result_roles1->num_rows > 0) {
                                                 while ($row = $result_roles1->fetch_assoc()) {
@@ -196,9 +196,9 @@ if (isset($_GET['status']) && $_GET['status'] == 'error') {
                                         <input type="text" class="form-control bg-light" id="txtStock" name="txtStock">
                                     </div>
                                     <div class="form-group col-md-6">
-
                                         <label for="Matricula" class="form-label">Matricula</label>
                                         <select class="form-control bg-light" id="txtMatricula" name="txtMatricula">
+                                            <option value="">Selecciona Alumno</option>
                                             <?php
                                             if ($result_roles->num_rows > 0) {
                                                 while ($row = $result_roles->fetch_assoc()) {
@@ -208,7 +208,6 @@ if (isset($_GET['status']) && $_GET['status'] == 'error') {
                                             ?>
                                         </select>
                                     </div>
-                                    <br>
                                 </div>
                                 <br>
                                 <button type="submit" name="action" value="Subir" class="btn btn-primary mr-2">Subir</button>
@@ -218,27 +217,50 @@ if (isset($_GET['status']) && $_GET['status'] == 'error') {
                 </div>
             </div>
         </div>
-        <?php
-        include('connection.php');
 
-        $sql = "SELECT 
+        <div class="card-body">
+            <?php
+            // Capturar el término de búsqueda desde el formulario
+            $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+            // Consulta SQL inicial (sin filtro de búsqueda)
+            $sql = "SELECT 
             prestamosherramientas.*, 
             herramientas.Nombre AS NombreHerramienta, 
             herramientas.Descripcion, 
             estudiantes.Matricula, 
             CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) AS NombreEstudiante, 
-            carreras.NombreCarrera, edificios.NombreEdificio
-        FROM prestamosherramientas 
-        JOIN herramientas ON prestamosherramientas.ItemID = herramientas.ItemID
-        JOIN edificios ON prestamosherramientas.EdificioID = edificios.EdificioID
-        JOIN estudiantes ON prestamosherramientas.Matricula = estudiantes.Matricula
-        JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID Where prestamosherramientas.EdificioID = 3";
-        $result = mysqli_query($conn, $sql);
-        ?>
-        <div class="card-body">
-            <h4 class="card-title">Registro de Prestamos</h4>
+            carreras.NombreCarrera, 
+            edificios.NombreEdificio
+            FROM prestamosherramientas 
+            JOIN herramientas ON prestamosherramientas.ItemID = herramientas.ItemID
+            JOIN edificios ON prestamosherramientas.EdificioID = edificios.EdificioID
+            JOIN estudiantes ON prestamosherramientas.Matricula = estudiantes.Matricula
+            JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID 
+            WHERE prestamosherramientas.EdificioID = 3 
+            AND prestamosherramientas.Estado = 'activo'";  // Filtrar por estado activo
+
+            // Si hay un término de búsqueda, agregar el filtro con 'AND'
+            if (!empty($search)) {
+                $sql .= " AND (
+                herramientas.Nombre LIKE '%$search%' 
+                OR herramientas.Descripcion LIKE '%$search%'
+                OR prestamosherramientas.Cantidad LIKE '%$search%'  
+                OR estudiantes.Matricula LIKE '%$search%'
+                OR CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) LIKE '%$search%'
+                OR carreras.NombreCarrera LIKE '%$search%'
+                OR edificios.NombreEdificio LIKE '%$search%'
+            )";
+            }
+
+            // Agregar cláusula ORDER BY para ordenar por FechaPrestamo de manera descendente
+            $sql .= " ORDER BY prestamosherramientas.FechaPrestamo DESC";  // Ordenar por FechaPrestamo de manera descendente
+
+            // Ejecutar la consulta
+            $result = mysqli_query($conn, $sql);
+            ?>
+            <h4 class="card-title">Prestamos Activos</h4>
             <p class="card-description">
-                Prestamo
             </p>
             <div class="table-responsive pt-3">
                 <table class="table table-bordered">
@@ -246,6 +268,7 @@ if (isset($_GET['status']) && $_GET['status'] == 'error') {
                         <tr class="table-info">
                             <th>Material</th>
                             <th>Descripción</th>
+                            <th>Cantidad Solicitada</th>
                             <th>Estudiante</th>
                             <th>Carrera</th>
                             <th>Edificio</th>
@@ -265,6 +288,7 @@ if (isset($_GET['status']) && $_GET['status'] == 'error') {
 
                                 <td><?php echo $row['NombreHerramienta'] ?></td>
                                 <td><?php echo $row['Descripcion'] ?></td>
+                                <td><?php echo $row['Cantidad'] ?></td>
                                 <td><?php echo $row['NombreEstudiante'] ?></td>
                                 <td><?php echo $row['NombreCarrera'] ?></td>
                                 <td><?php echo $row['NombreEdificio'] ?></td>
@@ -300,33 +324,140 @@ if (isset($_GET['status']) && $_GET['status'] == 'error') {
                 </table>
             </div>
 
-        </div>
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-        <script>
-            document.getElementById('toggleSidebar').addEventListener('click', function() {
-                document.getElementById('sidebar').classList.toggle('hide');
-                document.querySelector('.main-panel').classList.toggle('full-width');
-            });
-        </script>
-        <script>
-            $(document).ready(function() {
-                $('#txtMatricula').select2({
-                    placeholder: 'Busca una matrícula o nombre...',
-                    allowClear: true
-                });
-            });
+            <div class="card-body">
+                <?php
 
-            $(document).ready(function() {
-                $('#txtItemID').select2({
-                    placeholder: 'Busca una Material...',
-                    allowClear: true
+                // Capturar el término de búsqueda desde el formulario
+                $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+                // Consulta SQL inicial (sin filtro de búsqueda)
+                $sql = "SELECT 
+            prestamosherramientas.*, 
+            herramientas.Nombre AS NombreHerramienta, 
+            herramientas.Descripcion, 
+            estudiantes.Matricula, 
+            CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) AS NombreEstudiante, 
+            carreras.NombreCarrera, 
+            edificios.NombreEdificio
+            FROM prestamosherramientas 
+            JOIN herramientas ON prestamosherramientas.ItemID = herramientas.ItemID
+            JOIN edificios ON prestamosherramientas.EdificioID = edificios.EdificioID
+            JOIN estudiantes ON prestamosherramientas.Matricula = estudiantes.Matricula
+            JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID 
+            WHERE prestamosherramientas.EdificioID = 3 
+            AND prestamosherramientas.Estado = 'inactivo'";  // Filtrar por estado activo
+
+                // Si hay un término de búsqueda, agregar el filtro con 'AND'
+                if (!empty($search)) {
+                    $sql .= " AND (
+                herramientas.Nombre LIKE '%$search%' 
+                OR herramientas.Descripcion LIKE '%$search%'
+                OR prestamosherramientas.Cantidad LIKE '%$search%'  
+                OR estudiantes.Matricula LIKE '%$search%'
+                OR CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) LIKE '%$search%'
+                OR carreras.NombreCarrera LIKE '%$search%'
+                OR edificios.NombreEdificio LIKE '%$search%'
+            )";
+                }
+
+                // Agregar cláusula ORDER BY para ordenar por FechaPrestamo de manera descendente
+                $sql .= " ORDER BY prestamosherramientas.FechaDevolucion DESC";  // Ordenar por FechaPrestamo de manera descendente
+
+                // Ejecutar la consulta
+                $result = mysqli_query($conn, $sql);
+                ?>
+                <h4 class="card-title">Prestamos Inactivos</h4>
+                <p class="card-description">
+                </p>
+                <div class="table-responsive pt-3">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr class="table-info">
+                                <th>Material</th>
+                                <th>Descripción</th>
+                                <th>Cantidad Solicitada</th>
+                                <th>Estudiante</th>
+                                <th>Carrera</th>
+                                <th>Edificio</th>
+                                <th>Fecha Prestamo</th>
+                                <th>Fecha devolucion</th>
+                                <th>Estado</th>
+                                <th>Editar</th>
+                                <th>Eliminar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+
+                            while ($row = mysqli_fetch_array($result)) {
+                            ?>
+                                <tr>
+
+                                    <td><?php echo $row['NombreHerramienta'] ?></td>
+                                    <td><?php echo $row['Descripcion'] ?></td>
+                                    <td><?php echo $row['Cantidad'] ?></td>
+                                    <td><?php echo $row['NombreEstudiante'] ?></td>
+                                    <td><?php echo $row['NombreCarrera'] ?></td>
+                                    <td><?php echo $row['NombreEdificio'] ?></td>
+                                    <td><?php echo $row['FechaPrestamo'] ?></td>
+                                    <td><?php echo $row['FechaDevolucion'] ?></td>
+                                    <td>
+                                        <form id="estadoForm<?php echo $row['PrestamoID']; ?>" action="procesar_estadoNave.php" method="post">
+                                            <input type="hidden" name="PrestamoID" value="<?php echo $row['PrestamoID']; ?>">
+                                            <input class="switch" type="checkbox" id="estadoCheckbox<?php echo $row['PrestamoID']; ?>" name="estado" <?php echo ($row['Estado'] == 'activo') ? 'checked' : ''; ?>>
+                                        </form>
+                                    </td>
+                                    <script>
+                                        // Asigna la función al evento clic del checkbox
+                                        document.getElementById('estadoCheckbox<?php echo $row['PrestamoID']; ?>').addEventListener('click', function() {
+                                            document.getElementById('estadoForm<?php echo $row['PrestamoID']; ?>').submit();
+                                            this.disabled = true; // Desactiva el checkbox después de hacer clic
+                                        });
+                                    </script>
+                                    <td>
+                                        <a class="btn btn-primary" href="editarPHA1.php?id=<?php echo $row['PrestamoID'] ?>">Editar</a>
+                                    </td>
+                                    <td>
+                                        <form action="EliminarPHNave.php" method="post">
+                                            <input type="hidden" value="<?php echo $row['PrestamoID'] ?>" name="PrestamoID">
+                                            <input class="btn btn-danger" type="submit" value="Eliminar" name="btnEliminar" onclick='return confirmo()'>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php
+                            }
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+            <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+            <script>
+                document.getElementById('toggleSidebar').addEventListener('click', function() {
+                    document.getElementById('sidebar').classList.toggle('hide');
+                    document.querySelector('.main-panel').classList.toggle('full-width');
                 });
-            });
-        </script>
+            </script>
+            <script>
+                $(document).ready(function() {
+                    $('#txtMatricula').select2({
+                        placeholder: 'Busca una matrícula o nombre...',
+                        allowClear: true
+                    });
+                });
+
+                $(document).ready(function() {
+                    $('#txtItemID').select2({
+                        placeholder: 'Busca una Material...',
+                        allowClear: true
+                    });
+                });
+            </script>
 
 </body>
 

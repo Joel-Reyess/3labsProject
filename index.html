@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="stylemenu.css">
     <title>Prestamo e Inventario</title>
+    
 </head>
 <body>
     <header>
@@ -33,5 +34,13 @@
           </form>
         </div>
     </div>
+    <div id="error-message">
+      <?php
+      // Si el parámetro 'error' está en la URL, lo mostramos
+      if (isset($_GET['error'])) {
+          echo '<h1 class="bad">' . htmlspecialchars($_GET['error']) . '</h1>';
+      }
+      ?>
+  </div>
 </body>
 </html>

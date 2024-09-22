@@ -2,8 +2,8 @@
 
 session_start();
 error_reporting(0);
-$varsesion= $_SESSION['usuario'];
-if($varsesion== null || $varsesion=''){
+$varsesion = $_SESSION['usuario'];
+if ($varsesion == null || $varsesion = '') {
     header("location: index.html");
     die();
 }
@@ -61,8 +61,9 @@ if($varsesion== null || $varsesion=''){
     <nav class="navbar">
         <button id="toggleSidebar" class="btn btn-primary">☰</button>
         <div class="search-container">
-            <form action="/">
-                <input type="text" placeholder="Buscar" name="search">
+            <form action="IndexA1.php" method="GET">
+                <input type="text" placeholder="Buscar" name="search" onkeydown="if (event.key === 'Enter') { this.form.submit(); }">
+
                 <a class="btn btn-outline-danger" href="cerrar_session.php">Cerrar Sesion</a>
             </form>
         </div>
@@ -147,9 +148,23 @@ if($varsesion== null || $varsesion=''){
                     <tbody>
                         <?php
                         include('connection.php');
-                        $sql = "SELECT herramientas.*, edificios.NombreEdificio FROM herramientas 
+
+                        // Capturar el término de búsqueda de manera segura
+                        $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+                        // Modificar la consulta SQL para filtrar los resultados
+                        $sql = "SELECT herramientas.*, edificios.NombreEdificio 
+                        FROM herramientas 
                         JOIN edificios ON herramientas.EdificioID = edificios.EdificioID 
                         WHERE herramientas.EdificioID = 1";
+
+                        if (!empty($search)) {
+                            $sql .= " AND (herramientas.NS LIKE '%$search%' 
+                            OR herramientas.Nombre LIKE '%$search%' 
+                            OR herramientas.Descripcion LIKE '%$search%' 
+                            OR herramientas.Stock LIKE '%$search%' 
+                            OR edificios.NombreEdificio LIKE '%$search%')";
+                        }
 
                         $result = mysqli_query($conn, $sql);
 
@@ -174,6 +189,7 @@ if($varsesion== null || $varsesion=''){
                         <?php
                         }
                         ?>
+
                     </tbody>
                 </table>
             </div>

@@ -2,8 +2,8 @@
 
 session_start();
 error_reporting(0);
-$varsesion= $_SESSION['usuario'];
-if($varsesion== null || $varsesion=''){
+$varsesion = $_SESSION['usuario'];
+if ($varsesion == null || $varsesion = '') {
     header("location: index.html");
     die();
 }
@@ -126,8 +126,9 @@ $result_roles = $conn->query($sql_roles);
     <nav class="navbar">
         <button id="toggleSidebar" class="btn btn-primary">☰</button>
         <div class="search-container">
-            <form action="/">
-                <input type="text" placeholder="Buscar" name="search">
+            <form action="PrestamoM.php" method="GET">
+                <input type="text" placeholder="Buscar" name="search" onkeydown="if (event.key === 'Enter') { this.form.submit(); }">
+
                 <a class="btn btn-outline-danger" href="cerrar_session.php">Cerrar Sesion</a>
             </form>
         </div>
@@ -216,24 +217,45 @@ $result_roles = $conn->query($sql_roles);
         <?php
         include('connection.php');
 
+        // Capturar el término de búsqueda desde el formulario de forma segura
+        $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+        // Consulta SQL inicial (sin filtro de búsqueda)
         $sql = "SELECT 
-            prestamosmateriales.*, 
-            materiales.Nombre AS NombreMaterial, 
-            materiales.Descripcion, 
-            estudiantes.Matricula, 
-            CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) AS NombreEstudiante, 
-            carreras.NombreCarrera 
+        prestamosmateriales.*, 
+        materiales.Nombre AS NombreMaterial, 
+        materiales.Descripcion, 
+        estudiantes.Matricula, 
+        CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) AS NombreEstudiante, 
+        carreras.NombreCarrera 
         FROM prestamosmateriales 
         JOIN materiales ON prestamosmateriales.ItemID = materiales.ItemID
         JOIN estudiantes ON prestamosmateriales.Matricula = estudiantes.Matricula
-        JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID  Where prestamosmateriales.EdificioID = 1";
+        JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID
+        WHERE prestamosmateriales.EdificioID = 1";
+
+        // Si hay un término de búsqueda, agregar el filtro con 'AND'
+        if (!empty($search)) {
+            $sql .= " AND (
+            materiales.Nombre LIKE '%$search%' 
+            OR materiales.Descripcion LIKE '%$search%' 
+            OR estudiantes.Matricula LIKE '%$search%'
+            OR CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) LIKE '%$search%'
+            OR carreras.NombreCarrera LIKE '%$search%'
+        )";
+        }
+
+        // Ejecutar la consulta SQL
         $result = mysqli_query($conn, $sql);
+
+        // Verificar si la consulta tiene resultados
+        if (!$result) {
+            die("Error en la consulta: " . mysqli_error($conn));
+        }
         ?>
         <div class="card-body">
-            <h4 class="card-title">Registro de Prestamos</h4>
-            <p class="card-description">
-                Prestamo
-            </p>
+            <h4 class="card-title">Registro de Préstamos</h4>
+            <p class="card-description">Préstamo</p>
             <div class="table-responsive pt-3">
                 <table class="table table-bordered">
                     <thead>
@@ -249,61 +271,58 @@ $result_roles = $conn->query($sql_roles);
                         </tr>
                     </thead>
                     <tbody>
-                        <?php
-                        while ($row = mysqli_fetch_array($result)) {
-                        ?>
+                        <?php while ($row = mysqli_fetch_array($result)) { ?>
                             <tr>
-                                <td><?php echo $row['NombreMaterial'] ?></td>
-                                <td><?php echo $row['Descripcion'] ?></td>
-                                <td><?php echo $row['NombreEstudiante'] ?></td>
-                                <td><?php echo $row['NombreCarrera'] ?></td>
-                                <td><?php echo $row['FechaPrestamo'] ?></td>
-                                <td><?php echo $row['Cantidad'] ?></td>
+                                <td><?php echo htmlspecialchars($row['NombreMaterial']); ?></td>
+                                <td><?php echo htmlspecialchars($row['Descripcion']); ?></td>
+                                <td><?php echo htmlspecialchars($row['NombreEstudiante']); ?></td>
+                                <td><?php echo htmlspecialchars($row['NombreCarrera']); ?></td>
+                                <td><?php echo htmlspecialchars($row['FechaPrestamo']); ?></td>
+                                <td><?php echo htmlspecialchars($row['Cantidad']); ?></td>
                                 <td>
-                                    <a class="btn btn-primary" href="editarPM.php?id=<?php echo $row['PrestamoID'] ?>">Editar</a>
+                                    <a class="btn btn-primary" href="editarPM.php?id=<?php echo $row['PrestamoID']; ?>">Editar</a>
                                 </td>
                                 <td>
                                     <form action="EliminarPM.php" method="post">
-                                        <input type="hidden" value="<?php echo $row['PrestamoID'] ?>" name="PrestamoID">
-                                        <input class="btn btn-danger" type="submit" value="Eliminar" name="btnEliminar" onclick='return confirmo()'>
+                                        <input type="hidden" value="<?php echo $row['PrestamoID']; ?>" name="PrestamoID">
+                                        <input class="btn btn-danger" type="submit" value="Eliminar" name="btnEliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
                                     </form>
                                 </td>
                             </tr>
-                        <?php
-                        }
-                        ?>
+                        <?php } ?>
                     </tbody>
                 </table>
             </div>
-
         </div>
 
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-        <script>
-            document.getElementById('toggleSidebar').addEventListener('click', function() {
-                document.getElementById('sidebar').classList.toggle('hide');
-                document.querySelector('.main-panel').classList.toggle('full-width');
-            });
-        </script>
-        <script>
-            $(document).ready(function() {
-                $('#txtMatricula').select2({
-                    placeholder: 'Busca una matrícula o nombre...',
-                    allowClear: true
-                });
-            });
+    </div>
 
-            $(document).ready(function() {
-                $('#txtItemID').select2({
-                    placeholder: 'Busca una Material...',
-                    allowClear: true
-                });
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script>
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('hide');
+            document.querySelector('.main-panel').classList.toggle('full-width');
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('#txtMatricula').select2({
+                placeholder: 'Busca una matrícula o nombre...',
+                allowClear: true
             });
-        </script>
+        });
+
+        $(document).ready(function() {
+            $('#txtItemID').select2({
+                placeholder: 'Busca una Material...',
+                allowClear: true
+            });
+        });
+    </script>
 </body>
 
 </html>

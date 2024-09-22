@@ -1,8 +1,8 @@
 <?php
 session_start();
 error_reporting(0);
-$varsesion= $_SESSION['usuario'];
-if($varsesion== null || $varsesion=''){
+$varsesion = $_SESSION['usuario'];
+if ($varsesion == null || $varsesion = '') {
     header("location: index.html");
     die();
 }
@@ -79,8 +79,9 @@ $result_roles = $conn->query($sql_roles);
     <nav class="navbar">
         <button id="toggleSidebar" class="btn btn-primary">☰</button>
         <div class="search-container">
-            <form action="/">
-                <input type="text" placeholder="Buscar" name="search">
+            <form action="Alumnos.php" method="GET">
+                <input type="text" placeholder="Buscar" name="search" onkeydown="if (event.key === 'Enter') { this.form.submit(); }">
+
                 <a class="btn btn-outline-danger" href="cerrar_session.php">Cerrar Sesion</a>
             </form>
         </div>
@@ -95,10 +96,13 @@ $result_roles = $conn->query($sql_roles);
                     <a href="Alumnos.php"><img src="imagenes/casa-icon.png" alt="" srcset=""> Inicio</a>
                 </li>
                 <li>
+                    <a href="Alumnos.php"><img src="imagenes/alumno-icon.png" alt="" srcset=""> Alumnos</a>
+                </li>
+                <li>
                     <a href="Usuarios.php"><img src="imagenes/alumno-icon.png" alt="" srcset=""> Usuarios</a>
                 </li>
                 <li>
-                    <a href="Materiales.php"><img src="imagenes/alumno-icon.png" alt="" srcset=""> Consumibles</a>
+                    <a href="Materiales.php"><img src="imagenes/herramientas.png" alt="" srcset=""> Consumibles</a>
                 </li>
                 <li>
                     <a href="IndexA.php"><img src="imagenes/herramientas.png" alt="" srcset=""> Herramientas</a>
@@ -204,8 +208,22 @@ $result_roles = $conn->query($sql_roles);
                     <tbody>
                         <?php
                         include('connection.php');
+
+                        // Capturar el término de búsqueda
+                        $search = isset($_GET['search']) ? $_GET['search'] : '';
+
+                        // Modificar la consulta SQL para filtrar los resultados
                         $sql = "SELECT estudiantes.*, carreras.NombreCarrera FROM estudiantes 
-                        JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID";
+        JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID";
+
+                        if (!empty($search)) {
+                            $sql .= " WHERE estudiantes.Matricula LIKE '%$search%' 
+              OR estudiantes.Nombre LIKE '%$search%'
+              OR estudiantes.ApellidoP LIKE '%$search%'
+              OR estudiantes.ApellidoM LIKE '%$search%'
+              OR carreras.NombreCarrera LIKE '%$search%'";
+                        }
+
                         $result = mysqli_query($conn, $sql);
 
                         while ($mostrar = mysqli_fetch_array($result)) {

@@ -2,8 +2,8 @@
 
 session_start();
 error_reporting(0);
-$varsesion= $_SESSION['usuario'];
-if($varsesion== null || $varsesion=''){
+$varsesion = $_SESSION['usuario'];
+if ($varsesion == null || $varsesion = '') {
     header("location: index.html");
     die();
 }
@@ -125,8 +125,9 @@ $result_roles = $conn->query($sql_roles);
     <nav class="navbar">
         <button id="toggleSidebar" class="btn btn-primary">☰</button>
         <div class="search-container">
-            <form action="/">
-                <input type="text" placeholder="Buscar" name="search">
+            <form action="PrestamoMNave.php" method="GET">
+                <input type="text" placeholder="Buscar" name="search" onkeydown="if (event.key === 'Enter') { this.form.submit(); }">
+
                 <a class="btn btn-outline-danger" href="cerrar_session.php">Cerrar Sesion</a>
             </form>
         </div>
@@ -216,20 +217,48 @@ $result_roles = $conn->query($sql_roles);
                 </div>
             </div>
         </div>
+
         <?php
         include('connection.php');
 
+        // Capturar el término de búsqueda desde el formulario de forma segura
+        $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+        // Consulta SQL inicial (sin filtro de búsqueda)
         $sql = "SELECT 
-            prestamosmateriales.*, 
-            materiales.Nombre AS NombreMaterial, 
-            materiales.Descripcion, 
-            estudiantes.Matricula, 
-            CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) AS NombreEstudiante, 
-            carreras.NombreCarrera FROM prestamosmateriales JOIN materiales ON prestamosmateriales.ItemID = materiales.ItemID
-            JOIN estudiantes ON prestamosmateriales.Matricula = estudiantes.Matricula JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID  
-            Where prestamosmateriales.EdificioID = 3";
+        prestamosmateriales.*, 
+        materiales.Nombre AS NombreMaterial, 
+        materiales.Descripcion, 
+        estudiantes.Matricula, 
+        CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) AS NombreEstudiante, 
+        carreras.NombreCarrera 
+        FROM prestamosmateriales 
+        JOIN materiales ON prestamosmateriales.ItemID = materiales.ItemID
+        JOIN estudiantes ON prestamosmateriales.Matricula = estudiantes.Matricula
+        JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID
+        WHERE prestamosmateriales.EdificioID = 3";
+
+        // Si hay un término de búsqueda, agregar el filtro con 'AND'
+        if (!empty($search)) {
+            $sql .= " AND (
+            materiales.Nombre LIKE '%$search%' 
+            OR materiales.Descripcion LIKE '%$search%' 
+            OR prestamosmateriales.Cantidad LIKE '%$search%' 
+            OR estudiantes.Matricula LIKE '%$search%'
+            OR CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) LIKE '%$search%'
+            OR carreras.NombreCarrera LIKE '%$search%'
+        )";
+        }
+
+        // Ejecutar la consulta SQL
         $result = mysqli_query($conn, $sql);
+
+        // Verificar si la consulta tiene resultados
+        if (!$result) {
+            die("Error en la consulta: " . mysqli_error($conn));
+        }
         ?>
+
         <div class="card-body">
             <h4 class="card-title">Registro de Prestamos</h4>
             <div class="table-responsive pt-3">

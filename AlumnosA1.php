@@ -1,8 +1,8 @@
 <?php
 session_start();
 error_reporting(0);
-$varsesion= $_SESSION['usuario'];
-if($varsesion== null || $varsesion=''){
+$varsesion = $_SESSION['usuario'];
+if ($varsesion == null || $varsesion = '') {
     header("location: index.html");
     die();
 }
@@ -28,7 +28,7 @@ $result_roles = $conn->query($sql_roles);
     <title>Prestamo de herramientas</title>
     <link rel="stylesheet" href="bodysection.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-   
+
     <script>
         window.onload = function() {
             // Obtén los parámetros de la URL
@@ -56,7 +56,6 @@ $result_roles = $conn->query($sql_roles);
                 history.replaceState(null, null, newUrl);
             }
         }
-
     </script>
 </head>
 
@@ -71,8 +70,9 @@ $result_roles = $conn->query($sql_roles);
     <nav class="navbar">
         <button id="toggleSidebar" class="btn btn-primary">☰</button>
         <div class="search-container">
-            <form action="/">
-                <input type="text" placeholder="Buscar" name="search">
+            <form action="AlumnosA1.php" method="GET">
+                <input type="text" placeholder="Buscar" name="search" oninput="this.form.submit()">
+
                 <a class="btn btn-outline-danger" href="cerrar_session.php">Cerrar Sesion</a>
             </form>
         </div>
@@ -191,8 +191,22 @@ $result_roles = $conn->query($sql_roles);
                     <tbody>
                         <?php
                         include('connection.php');
+
+                        // Capturar el término de búsqueda
+                        $search = isset($_GET['search']) ? $_GET['search'] : '';
+
+                        // Modificar la consulta SQL para filtrar los resultados
                         $sql = "SELECT estudiantes.*, carreras.NombreCarrera FROM estudiantes 
-                        JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID";
+        JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID";
+
+                        if (!empty($search)) {
+                            $sql .= " WHERE estudiantes.Matricula LIKE '%$search%' 
+              OR estudiantes.Nombre LIKE '%$search%'
+              OR estudiantes.ApellidoP LIKE '%$search%'
+              OR estudiantes.ApellidoM LIKE '%$search%'
+              OR carreras.NombreCarrera LIKE '%$search%'";
+                        }
+
                         $result = mysqli_query($conn, $sql);
 
                         while ($mostrar = mysqli_fetch_array($result)) {
@@ -205,10 +219,10 @@ $result_roles = $conn->query($sql_roles);
                                 <td><?php echo $mostrar['Grupo'] ?></td>
                                 <td><?php echo $mostrar["NombreCarrera"]; ?></td>
                                 <td>
-                                    <a class="btn btn-primary" href="editar.php?id=<?php echo $mostrar['Matricula'] ?>">Editar</a>
+                                    <a class="btn btn-primary" href="editarA.php?id=<?php echo $mostrar['Matricula'] ?>">Editar</a>
                                 </td>
                                 <td>
-                                    <form action="Eliminar.php" method="post">
+                                    <form action="EliminarA.php" method="post">
                                         <input type="hidden" value="<?php echo $mostrar['Matricula'] ?>" name="txtMatricula">
                                         <input type="submit" class="btn btn-danger" value="Eliminar" name="btnEliminar" onclick='return confirmo()'>
                                     </form>
@@ -217,7 +231,6 @@ $result_roles = $conn->query($sql_roles);
                         <?php
                         }
                         ?>
-
                     </tbody>
                 </table>
             </div>

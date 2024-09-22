@@ -2,8 +2,8 @@
 
 session_start();
 error_reporting(0);
-$varsesion= $_SESSION['usuario'];
-if($varsesion== null || $varsesion=''){
+$varsesion = $_SESSION['usuario'];
+if ($varsesion == null || $varsesion = '') {
     header("location: index.html");
     die();
 }
@@ -73,8 +73,9 @@ if($varsesion== null || $varsesion=''){
     <nav class="navbar">
         <button id="toggleSidebar" class="btn btn-primary">☰</button>
         <div class="search-container">
-            <form action="/">
-                <input type="text" placeholder="Buscar" name="search">
+            <form action="MaterialesNave.php" method="GET">
+                <input type="text" placeholder="Buscar" name="search" onkeydown="if (event.key === 'Enter') { this.form.submit(); }">
+
                 <a class="btn btn-outline-danger" href="cerrar_session.php">Cerrar Sesion</a>
             </form>
         </div>
@@ -149,11 +150,28 @@ if($varsesion== null || $varsesion=''){
                                         <tbody>
                                             <?php
                                             include('connection.php');
-                                            $sql = "SELECT materiales.*, edificios.NombreEdificio FROM materiales 
-                                            JOIN edificios ON materiales.EdificioID = edificios.EdificioID 
-                                            WHERE materiales.EdificioID = 3";
+
+                                            // Capturar el término de búsqueda
+                                            $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+                                            // Modificar la consulta SQL para filtrar los resultados
+                                            $sql = "SELECT materiales.*, edificios.NombreEdificio 
+                                                    FROM materiales 
+                                                    JOIN edificios ON materiales.EdificioID = edificios.EdificioID 
+                                                    WHERE materiales.EdificioID = 3"; // Primera condición fija
+
+                                            // Si hay un término de búsqueda, agregar el filtro con 'AND'
+                                            if (!empty($search)) {
+                                                $sql .= " AND (materiales.Nombre LIKE '%$search%' 
+                                                OR materiales.Descripcion LIKE '%$search%'
+                                                OR materiales.Stock LIKE '%$search%'
+                                                OR edificios.NombreEdificio LIKE '%$search%')";
+                                            }
+
                                             $result = mysqli_query($conn, $sql);
 
+
+                                            // Si hay resultados, los mostramos en la tabla
                                             while ($mostrar = mysqli_fetch_array($result)) {
                                             ?>
                                                 <tr>

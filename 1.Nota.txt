@@ -2,12 +2,23 @@
 En Estudiantes:
 BD: Dividir Campo apellidos por apellido paterno y materno,
  crear tabla carrera, 
- crear llave foranea con tabla estiduante
+ crear llave foranea con tabla estiduante {Resulto}
 
 En Usuario
- App: crear Editar para usuario
+ App: crear Editar para usuario {Resulto}
 
 En Prestamo
 App: crear CRUD para Prestamo, 
 "Tomar en cuenta que al agregar debe descontar 1 o mas del stock del material
-en caso de Herramienta"
+en caso de Herramienta" {Resulto}
+
+09/17/24
+Buscador pendiente:
+Prestamo material Admin, A1, B1, Nave, Usuario {Resuelto}
+
+
+Login si usuario no existe crear error
+
+Prestamo Herramienta 
+- crear tabla para prestamo inactivos
+create branch to github

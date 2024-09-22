@@ -2,8 +2,8 @@
 
 session_start();
 error_reporting(0);
-$varsesion= $_SESSION['usuario'];
-if($varsesion== null || $varsesion=''){
+$varsesion = $_SESSION['usuario'];
+if ($varsesion == null || $varsesion = '') {
     header("location: index.html");
     die();
 }
@@ -135,8 +135,9 @@ $result_roles2 = $conn->query($sql_roles2);
     <nav class="navbar">
         <button id="toggleSidebar" class="btn btn-primary">☰</button>
         <div class="search-container">
-            <form action="/">
-                <input type="text" placeholder="Buscar" name="search">
+            <form action="PrestamoMA.php" method="GET">
+                <input type="text" placeholder="Buscar" name="search" onkeydown="if (event.key === 'Enter') { this.form.submit(); }">
+
                 <a class="btn btn-outline-danger" href="cerrar_session.php">Cerrar Sesion</a>
             </form>
         </div>
@@ -149,10 +150,13 @@ $result_roles2 = $conn->query($sql_roles2);
                     <a href="Alumnos.php"><img src="imagenes/casa-icon.png" alt="" srcset=""> Inicio</a>
                 </li>
                 <li>
+                    <a href="Alumnos.php"><img src="imagenes/alumno-icon.png" alt="" srcset=""> Alumnos</a>
+                </li>
+                <li>
                     <a href="Usuarios.php"><img src="imagenes/alumno-icon.png" alt="" srcset=""> Usuarios</a>
                 </li>
                 <li>
-                    <a href="Materiales.php"><img src="imagenes/alumno-icon.png" alt="" srcset=""> Consumibles</a>
+                    <a href="Materiales.php"><img src="imagenes/herramientas.png" alt="" srcset=""> Consumibles</a>
                 </li>
                 <li>
                     <a href="IndexA.php"><img src="imagenes/herramientas.png" alt="" srcset=""> Herramientas</a>
@@ -240,21 +244,48 @@ $result_roles2 = $conn->query($sql_roles2);
             </div>
         </div>
         <?php
+
+        // Incluir la conexión a la base de datos
         include('connection.php');
 
+        // Capturar el término de búsqueda desde el formulario de forma segura
+        $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+        // Consulta SQL inicial con LEFT JOIN para asegurarse de que siempre muestre prestamosmateriales
         $sql = "SELECT 
-            prestamosmateriales.*, 
-            materiales.Nombre AS NombreMaterial, 
-            materiales.Descripcion, 
-            estudiantes.Matricula, 
-            CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) AS NombreEstudiante, 
-            carreras.NombreCarrera, edificios.NombreEdificio
-        FROM prestamosmateriales 
-        JOIN materiales ON prestamosmateriales.ItemID = materiales.ItemID
-        JOIN edificios ON prestamosmateriales.EdificioID = edificios.EdificioID
-        JOIN estudiantes ON prestamosmateriales.Matricula = estudiantes.Matricula
-        JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID ";
+        prestamosmateriales.*, 
+        materiales.Nombre AS NombreMaterial, 
+        materiales.Descripcion, 
+        estudiantes.Matricula, 
+        CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) AS NombreEstudiante, 
+        carreras.NombreCarrera,
+        edificios.NombreEdificio 
+    FROM prestamosmateriales 
+    LEFT JOIN materiales ON prestamosmateriales.ItemID = materiales.ItemID
+    LEFT JOIN edificios ON prestamosmateriales.EdificioID = edificios.EdificioID
+    LEFT JOIN estudiantes ON prestamosmateriales.Matricula = estudiantes.Matricula
+    LEFT JOIN carreras ON estudiantes.CarreraID = carreras.CarreraID";
+
+        // Si hay un término de búsqueda, agregar el filtro con 'WHERE'
+        if (!empty($search)) {
+            $sql .= " WHERE (
+            materiales.Nombre LIKE '%$search%' 
+            OR materiales.Descripcion LIKE '%$search%' 
+            OR prestamosmateriales.Cantidad LIKE '%$search%' 
+            OR estudiantes.Matricula LIKE '%$search%'
+            OR edificios.NombreEdificio LIKE '%$search%'
+            OR CONCAT(estudiantes.Nombre, ' ', estudiantes.ApellidoP, ' ', estudiantes.ApellidoM) LIKE '%$search%'
+            OR carreras.NombreCarrera LIKE '%$search%'
+        )";
+        }
+
+        // Ejecutar la consulta SQL
         $result = mysqli_query($conn, $sql);
+
+        // Verificar si la consulta tiene resultados
+        if (!$result) {
+            die("Error en la consulta: " . mysqli_error($conn));
+        }
         ?>
         <div class="card-body">
             <h4 class="card-title">Registro de Prestamos</h4>
@@ -269,9 +300,9 @@ $result_roles2 = $conn->query($sql_roles2);
                             <th>Descripción</th>
                             <th>Estudiante</th>
                             <th>Carrera</th>
+                            <th>Edificio</th>
                             <th>Fecha</th>
                             <th>Cantidad</th>
-                            <th>Edificio</th>
                             <th>Editar</th>
                             <th>Eliminar</th>
                         </tr>

@@ -1,8 +1,8 @@
 <?php
 session_start();
 error_reporting(0);
-$varsesion= $_SESSION['usuario'];
-if($varsesion== null || $varsesion=''){
+$varsesion = $_SESSION['usuario'];
+if ($varsesion == null || $varsesion = '') {
     header("location: index.html");
     die();
 }
@@ -76,8 +76,9 @@ $result_roles = $conn->query($sql_roles);
     <nav class="navbar">
         <button id="toggleSidebar" class="btn btn-primary">☰</button>
         <div class="search-container">
-            <form action="/">
-                <input type="text" placeholder="Buscar" name="search">
+            <form action="Usuarios.php" method="GET">
+                <input type="text" placeholder="Buscar" name="search" onkeydown="if (event.key === 'Enter') { this.form.submit(); }">
+
                 <a class="btn btn-outline-danger" href="cerrar_session.php">Cerrar Sesion</a>
             </form>
         </div>
@@ -89,10 +90,13 @@ $result_roles = $conn->query($sql_roles);
                     <a href="Alumnos.php"><img src="imagenes/casa-icon.png" alt="" srcset=""> Inicio</a>
                 </li>
                 <li>
+                    <a href="Alumnos.php"><img src="imagenes/alumno-icon.png" alt="" srcset=""> Alumnos</a>
+                </li>
+                <li>
                     <a href="Usuarios.php"><img src="imagenes/alumno-icon.png" alt="" srcset=""> Usuarios</a>
                 </li>
                 <li>
-                    <a href="Materiales.php"><img src="imagenes/alumno-icon.png" alt="" srcset=""> Consumibles</a>
+                    <a href="Materiales.php"><img src="imagenes/herramientas.png" alt="" srcset=""> Consumibles</a>
                 </li>
                 <li>
                     <a href="IndexA.php"><img src="imagenes/herramientas.png" alt="" srcset=""> Herramientas</a>
@@ -113,9 +117,9 @@ $result_roles = $conn->query($sql_roles);
                 <div class="col-md-12 col-lg-12  grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Herramientas</h4>
+                            <h4 class="card-title">Agregar Alumno</h4>
                             <p class="card-description">
-                                Registro de Alumnos
+                                Coloque la informacion del alumno
                             </p>
                             <form class="forms-sample" action="registroUsuario.php" method="POST">
                                 <div class="form-group">
@@ -136,7 +140,7 @@ $result_roles = $conn->query($sql_roles);
                                 </div>
                                 <div class="form-group">
                                     <label for="Nombre" class="form-label">Contraseña</label>
-                                    <input type="text" class="form-control bg-light" id="Nombre" name="txtContraseña" Required>
+                                    <input type="password" class="form-control bg-light" id="Nombre" name="txtContraseña" Required>
                                 </div>
                                 <div class="form-group">
                                     <label for="Apellidos" class="form-label">Rol</label>
@@ -164,27 +168,45 @@ $result_roles = $conn->query($sql_roles);
                                             <tr class="table-info">
                                                 <th>Matricula</th>
                                                 <th>Nombre</th>
-                                                <th>Contraseña</th>
                                                 <th>Rol</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php
                                             include('connection.php');
+
+                                            // Capturar el término de búsqueda de manera segura
+                                            $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+
+                                            // Consulta SQL para obtener usuarios y sus roles
                                             $sql = "SELECT usuarios.*, roles.NombreRol FROM usuarios 
-                                             JOIN roles ON usuarios.RolID = roles.RolID";
+            JOIN roles ON usuarios.RolID = roles.RolID";
+
+                                            // Si hay un término de búsqueda, agregar el filtro a la consulta
+                                            if (!empty($search)) {
+                                                $sql .= " WHERE usuarios.Matricula LIKE '%$search%' 
+                  OR usuarios.Nombre LIKE '%$search%' 
+                  OR usuarios.ApellidoP LIKE '%$search%' 
+                  OR usuarios.ApellidoM LIKE '%$search%' 
+                  OR roles.NombreRol LIKE '%$search%'";
+                                            }
+
+                                            // Ejecutar la consulta
                                             $result = mysqli_query($conn, $sql);
 
-                                            while ($mostrar = mysqli_fetch_array($result)) {
+                                            // Verificar si la consulta fue exitosa
+                                            if (!$result) {
+                                                die("Error en la consulta: " . mysqli_error($conn));
+                                            }
+
+                                            // Bucle para mostrar los resultados
+                                            while ($mostrar = mysqli_fetch_array($result)) { // Este bucle itera sobre los resultados
+
                                             ?>
                                                 <tr>
                                                     <td><?php echo $mostrar['Matricula'] ?></td>
-                                                    <td><?php echo $mostrar['Nombre']  . ' ' . $mostrar['ApellidoP'] . ' ' . $mostrar['ApellidoM'] ?></td>
-                                                    <td type="password">
-                                                        <input type="password" value="<?php echo $mostrar['Contraseña'] ?>" disabled>
-                                                    </td>
+                                                    <td><?php echo $mostrar['Nombre'] . ' ' . $mostrar['ApellidoP'] . ' ' . $mostrar['ApellidoM'] ?></td>
                                                     <td><?php echo $mostrar["NombreRol"]; ?></td>
-
                                                     <td>
                                                         <a class="btn btn-primary" href="editarUsuario.php?id=<?php echo $mostrar['Matricula'] ?>">Editar</a>
                                                     </td>
@@ -196,8 +218,9 @@ $result_roles = $conn->query($sql_roles);
                                                     </td>
                                                 </tr>
                                             <?php
-                                            }
+                                            } // Fin del bucle while
                                             ?>
+
                                         </tbody>
                                     </table>
                                 </div>
