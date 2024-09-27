@@ -3,7 +3,7 @@ session_start();
 error_reporting(0);
 $varsesion= $_SESSION['usuario'];
 if($varsesion== null || $varsesion=''){
-    header("location: index.html");
+    header("location: index.php");
     die();
 }
 
@@ -47,7 +47,7 @@ if($varsesion== null || $varsesion=''){
     <<header>
         <div class="container">
             <div class="logo">
-                <a href="index.html"><img src="imagenes/uttn_logo.jpg" alt="Logo"></a>
+                <a href="index.php"><img src="imagenes/uttn_logo.jpg" alt="Logo"></a>
             </div>
         </div>
         </header>
